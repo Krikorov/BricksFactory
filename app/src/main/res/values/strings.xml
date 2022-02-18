@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">BricksFactory</string>
+    <string name="textview">Подключение</string>
+    <string name="start">Старт</string>
+    <string name="start_ip">192.168.0.24</string>
+    <string name="error_ip">Введен неверный IP адрес</string>
+    <string name="Back">Назад</string>
+    <string name="connectionErr">Соединение не удалось</string>
+
+</resources>

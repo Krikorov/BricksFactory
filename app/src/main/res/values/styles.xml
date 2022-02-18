@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="BtnStyle1">
+        <item name="android:textColor">@drawable/btn_text_color</item>
+        <item name="android:background">@drawable/btn_background1</item>
+    </style>
+
+    <style name="spinnerStyle">
+        <item name="android:textSize">30dp</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
+        <item name="android:background">@drawable/spinner_style</item>
+    </style>
+</resources>

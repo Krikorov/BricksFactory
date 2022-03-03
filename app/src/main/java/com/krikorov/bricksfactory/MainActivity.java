@@ -1,26 +1,14 @@
-package com.krikorov.bricksfactory3;
-
-import static androidx.core.content.ContextCompat.startActivity;
+package com.krikorov.bricksfactory;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-
-import com.krikorov.bricksfactory3.AutoModeActivity;
-import com.krikorov.bricksfactory3.Context;
-import com.neovisionaries.ws.client.WebSocket;
-import com.neovisionaries.ws.client.WebSocketAdapter;
-import com.neovisionaries.ws.client.WebSocketException;
-import com.neovisionaries.ws.client.WebSocketFactory;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

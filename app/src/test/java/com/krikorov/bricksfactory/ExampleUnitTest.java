@@ -1,4 +1,4 @@
-package com.krikorov.bricksfactory3;
+package com.krikorov.bricksfactory;
 
 import org.junit.Test;
 

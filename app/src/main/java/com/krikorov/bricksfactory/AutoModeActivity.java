@@ -1,4 +1,4 @@
-package com.krikorov.bricksfactory3;
+package com.krikorov.bricksfactory;
 
 
 import android.content.Intent;
@@ -10,12 +10,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Spinner;
-import android.widget.Toast;
 
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.Vector;
 
 public class AutoModeActivity extends AppCompatActivity{
     public Spinner spinner;

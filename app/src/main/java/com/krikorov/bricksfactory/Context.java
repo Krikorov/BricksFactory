@@ -1,7 +1,6 @@
-package com.krikorov.bricksfactory3;
+package com.krikorov.bricksfactory;
 
 import android.app.Application;
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StrictMode;

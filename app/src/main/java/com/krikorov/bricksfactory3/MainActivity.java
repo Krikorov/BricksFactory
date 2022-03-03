@@ -58,27 +58,48 @@ public class MainActivity extends AppCompatActivity {
         context.activity = this;
         progressBar.setVisibility(View.INVISIBLE);
 
-        try {
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    openFileInput(fileSettings)));
-            String str = "";
-            while ((str = br.readLine()) != null) {
-                machine_ip.setText(str);
+
+        Runnable runnable = new Runnable() {
+            public void run() {
+                try {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(
+                            openFileInput(fileSettings)));
+                    String str;
+                    while ((str = br.readLine()) != null) {
+                        final String str2 = str;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                machine_ip.setText(str2);
+                            }
+                        });
+
+                    }
+                    br.close();
+                } catch (FileNotFoundException e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            machine_ip.setText(R.string.start_ip);
+                        }
+                    });
+
+                    File file = new File(getFilesDir(), fileSettings);
+                    try {
+                        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+                        bw.write(getResources().getString(R.string.start_ip));
+                        bw.close();
+                    } catch (IOException e2) {
+                        e2.printStackTrace();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-            br.close();
-        } catch (FileNotFoundException e) {
-            machine_ip.setText(R.string.start_ip);
-            File file = new File(getFilesDir(), fileSettings);
-            try {
-                BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-                bw.write(getResources().getString(R.string.start_ip));
-                bw.close();
-            } catch (IOException e2) {
-                e2.printStackTrace();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
 
 
         btn_connect.setOnClickListener(new View.OnClickListener() {

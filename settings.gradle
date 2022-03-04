@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "BricksFactory3"
+rootProject.name = "BricksFactory"
 include ':app'

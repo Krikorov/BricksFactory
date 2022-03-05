@@ -35,8 +35,6 @@ public class AutoModeActivity extends AppCompatActivity{
         context = (Context) getApplicationContext();
         context.activity = this;
 
-        //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-
         if(context.prg_name.size() == 0){
             context.prg_name.add("Выберите программу");
         }
@@ -51,6 +49,7 @@ public class AutoModeActivity extends AppCompatActivity{
         adapter.setDropDownViewResource(R.layout.spinner_dropdown_layout);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
             public void onItemSelected(AdapterView<?> parent,
                                        View itemSelected, int selectedItemPosition, long selectedId) {
                 context.prg_index = selectedItemPosition;
@@ -58,39 +57,22 @@ public class AutoModeActivity extends AppCompatActivity{
                 Log.d("AutoModeActivity", String.valueOf(selectedItemPosition));
 
             }
+            @Override
             public void onNothingSelected(AdapterView<?> parent) {
             }
 
         });
-        btnBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                context.disconnect();
-                Intent intent = new Intent(AutoModeActivity.this, MainActivity.class);
-                startActivity(intent); finish();
-            }
+        btnBack.setOnClickListener(view -> {
+            context.disconnect();
+            Intent intent = new Intent(AutoModeActivity.this, MainActivity.class);
+            startActivity(intent); finish();
         });
 
-        btnStart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                context.start();
-            }
-        });
+        btnStart.setOnClickListener(view -> context.start());
 
-        btnPause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                context.pause();
-            }
-        });
+        btnPause.setOnClickListener(view -> context.pause());
 
-        btnStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                context.stop();
-            }
-        });
+        btnStop.setOnClickListener(view -> context.stop());
     }
     @Override
     public void onBackPressed(){

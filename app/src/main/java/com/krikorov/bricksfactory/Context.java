@@ -3,9 +3,9 @@ package com.krikorov.bricksfactory;
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
+import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,8 +31,8 @@ public class Context extends Application {
     public volatile AppCompatActivity activity;
     public volatile Handler handlerConnection = null;
     private volatile int status = 0; //статус который приходит от машины
-    public volatile Vector<String> prg_name = new Vector<String>();
-    public volatile Vector<Integer> prg_id = new Vector<Integer>();
+    public volatile Vector<String> prg_name;
+    public volatile Vector<Integer> prg_id;
     public volatile int prg_index = 0;
 
     final int COMMAND_AFTER_REBOOT = 0;
@@ -50,7 +50,9 @@ public class Context extends Application {
     public void onCreate() {
         super.onCreate();
         state = new Ready();
-        StrictMode.enableDefaults();
+        prg_name = new Vector<>();
+        prg_id = new Vector<>();
+        //StrictMode.enableDefaults();
     }
     public void connect(String HOST_, int PORT_){
         connection = new Connection(HOST_, PORT_);
@@ -70,13 +72,7 @@ public class Context extends Application {
     public void disconnect(){
         state.disconnect();
     }
-    public void setState (State state_){
-        state = state_;
-    }
 
-    public State getState(){
-        return this.state;
-    }
 
     public void onTextMessage (String message_){
         Log.d("Socket", message_);
@@ -87,7 +83,7 @@ public class Context extends Application {
             if(jsonAnswer.has("status")){
                 status = jsonAnswer.getInt("status");
                 //если поле программы не пустое, то запоминаем ее ID
-                if(jsonAnswer.getString("prg_id") != "")
+                if(!jsonAnswer.getString("prg_id").equals(""))
                 {
                     prg_index = prg_id.indexOf(Integer.parseInt(jsonAnswer.getString("prg_id")));
                 }
@@ -102,12 +98,13 @@ public class Context extends Application {
                     prg_name.add(c.getString("name"));
                     prg_id.add(c.getInt("ID"));
                 }
+                ((AutoModeActivity)activity).adapter.notifyDataSetChanged();
             }
         }
-        catch(JSONException e){
+        catch(JSONException ignored){
 
         }
-        //машина остановлена
+        //стоп
         if (status == 0){
             state = new Stopped();
             ((AutoModeActivity)this.activity).btnStart.setEnabled(true);
@@ -143,22 +140,18 @@ public class Context extends Application {
 
     }
 
-    public void onConnected() throws InterruptedException {
+    public void onConnected() {
         Log.d("Socket", "connecting");
         state = new Stopped();
-        handlerConnection.sendEmptyMessage(COMMAND_GET_LIST_PRG);
-        AppCompatActivity oldActivity = activity;
-        ((MainActivity)activity).runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ((MainActivity)activity).changeActivity();
-            }
-        });
+        if(handlerConnection.sendEmptyMessage(COMMAND_GET_LIST_PRG)){
+            activity.runOnUiThread(() -> ((MainActivity)activity).changeActivity());
+        }
+
     }
 
     public void onStateChanged(String s){
         Log.d("Socket", s);
-        if (s == "CLOSED"){
+        if (s.equals("CLOSED")){
             ((MainActivity)this.activity).progressBar.setVisibility(View.INVISIBLE);
         }
     }
@@ -167,10 +160,9 @@ public class Context extends Application {
 
     public class Connection extends Thread{
         private WebSocket ws = null;
-        private Context context = null;
-        private String HOST = "";
-        private int PORT;
-        private boolean isRun = false;
+        private Context context;
+        private final String HOST;
+        private final int PORT;
         private Handler handler = null;
 
         Connection (String HOST_, int PORT_){
@@ -231,17 +223,17 @@ public class Context extends Application {
             }
             ws.addListener(new WebSocketAdapter() {
                 @Override
-                public void onConnected(WebSocket websocket, Map<String, List<String>> headers) throws Exception {
+                public void onConnected(WebSocket websocket, Map<String, List<String>> headers) {
                     context.onConnected();
                 }
                 @Override
-                public void onTextMessage(WebSocket websocket, String message_) throws Exception {
+                public void onTextMessage(WebSocket websocket, String message_) {
                     //получили текст
                     context.onTextMessage(message_);
                 }
 
                 @Override
-                public void onStateChanged (WebSocket websocket, WebSocketState newState) throws Exception{
+                public void onStateChanged (WebSocket websocket, WebSocketState newState){
                     context.onStateChanged( newState.toString());
                 }
             });
@@ -259,28 +251,23 @@ public class Context extends Application {
         private void disconnect(){
             Log.d("Socket", "disconnect");
             ws.disconnect();
-            if (ws.isOpen() != true){
+            if (!ws.isOpen()){
                 ws = null;
             }
             handler.post(new QuitLooper());
             context.connection = null;
         }
 
-        final Runnable connectionError = new Runnable() {
-            public void run() {
-                //вызывается через 3 сек. после старта попытки подключения
-                if(context.activity instanceof MainActivity) {
-                    ((MainActivity)context.activity).progressBar.setVisibility(View.INVISIBLE);
-                    ((MainActivity)context.activity).runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast toast = Toast.makeText(((MainActivity)context.activity),
-                                    R.string.connectionErr, Toast.LENGTH_LONG);
-                            toast.show();
-                        }
-                    });
+        final Runnable connectionError = () -> {
+            //вызывается через 3 сек. после старта попытки подключения
+            if(context.activity instanceof MainActivity) {
+                ((MainActivity)context.activity).progressBar.setVisibility(View.INVISIBLE);
+                context.activity.runOnUiThread(() -> {
+                    Toast toast = Toast.makeText(context.activity,
+                            R.string.connectionErr, Toast.LENGTH_LONG);
+                    toast.show();
+                });
 
-                }
             }
         };
 
@@ -295,17 +282,12 @@ public class Context extends Application {
     }
 
     public abstract class State {
-        protected Context context = (Context) getApplicationContext();;
-        public void setContext(Context context_){
-            context = context_;
-        }
+        protected Context context = (Context) getApplicationContext();
 
         public void disconnect(){
 
         }
-        public void connect(){
 
-        }
         public void start(){
 
         }
@@ -322,9 +304,7 @@ public class Context extends Application {
         public void disconnect(){
 
         }
-        public void connect(){
 
-        }
         public void start(){
 
         }
@@ -342,27 +322,17 @@ public class Context extends Application {
             connection.disconnect();
             context.state = new Ready();
         }
-        public void connect(){
 
-        }
         public void start(){
 
         }
         public void stop(){
-            ((AutoModeActivity)activity).btnStart.setEnabled(false);
-            ((AutoModeActivity)activity).btnPause.setEnabled(false);
             ((AutoModeActivity)activity).btnStop.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setClickable(false);
             handlerConnection.sendEmptyMessage(COMMAND_STOP);
             state = new Stopped();
         }
         public void pause() {
-            ((AutoModeActivity)activity).btnStart.setEnabled(false);
             ((AutoModeActivity)activity).btnPause.setEnabled(false);
-            ((AutoModeActivity)activity).btnStop.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setClickable(false);
             handlerConnection.sendEmptyMessage(COMMAND_PAUSE);
             state = new Paused();
         }
@@ -373,15 +343,9 @@ public class Context extends Application {
             connection.disconnect();
             context.state = new Ready();
         }
-        public void connect(){
 
-        }
         public void start(){
             ((AutoModeActivity)activity).btnStart.setEnabled(false);
-            ((AutoModeActivity)activity).btnPause.setEnabled(false);
-            ((AutoModeActivity)activity).btnStop.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setClickable(false);
             handlerConnection.sendEmptyMessage(COMMAND_START);
             state = new Started();
         }
@@ -398,24 +362,14 @@ public class Context extends Application {
             connection.disconnect();
             context.state = new Ready();
         }
-        public void connect(){
 
-        }
         public void start(){
             ((AutoModeActivity)activity).btnStart.setEnabled(false);
-            ((AutoModeActivity)activity).btnPause.setEnabled(false);
-            ((AutoModeActivity)activity).btnStop.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setClickable(false);
             handlerConnection.sendEmptyMessage(COMMAND_CONTINUE);
             state = new Started();
         }
         public void stop(){
-            ((AutoModeActivity)activity).btnStart.setEnabled(false);
-            ((AutoModeActivity)activity).btnPause.setEnabled(false);
             ((AutoModeActivity)activity).btnStop.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setClickable(false);
             handlerConnection.sendEmptyMessage(COMMAND_STOP);
             state = new Stopped();
         }

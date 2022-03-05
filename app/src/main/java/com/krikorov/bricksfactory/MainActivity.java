@@ -24,10 +24,8 @@ import java.util.regex.Pattern;
 public class MainActivity extends AppCompatActivity {
 
     private EditText machine_ip;
-    private Button btn_connect;
     private Context context = null;
-    private int PORT = 81;
-    private String HOST;
+    private final int PORT = 81;
     private PrintWriter bufferSender;
     public ProgressBar progressBar;
     private final String fileSettings= "settings";
@@ -40,79 +38,60 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         machine_ip = findViewById(R.id.machine_ip);
-        btn_connect = findViewById(R.id.btn_connect);
+        Button btn_connect = findViewById(R.id.btn_connect);
         progressBar = findViewById(R.id.progressBar);
         context = (Context) getApplicationContext();
         context.activity = this;
         progressBar.setVisibility(View.INVISIBLE);
 
 
-        Runnable runnable = new Runnable() {
-            public void run() {
-                try {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(
-                            openFileInput(fileSettings)));
-                    String str;
-                    while ((str = br.readLine()) != null) {
-                        final String str2 = str;
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                machine_ip.setText(str2);
-                            }
-                        });
+        Runnable runnable = () -> {
+            try {
+                BufferedReader br = new BufferedReader(new InputStreamReader(
+                        openFileInput(fileSettings)));
+                String str;
+                while ((str = br.readLine()) != null) {
+                    final String str2 = str;
+                    runOnUiThread(() -> machine_ip.setText(str2));
 
-                    }
-                    br.close();
-                } catch (FileNotFoundException e) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            machine_ip.setText(R.string.start_ip);
-                        }
-                    });
-
-                    File file = new File(getFilesDir(), fileSettings);
-                    try {
-                        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-                        bw.write(getResources().getString(R.string.start_ip));
-                        bw.close();
-                    } catch (IOException e2) {
-                        e2.printStackTrace();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
-            }
+                br.close();
+            } catch (FileNotFoundException e) {
+                runOnUiThread(() -> machine_ip.setText(R.string.start_ip));
 
+                File file = new File(getFilesDir(), fileSettings);
+                try {
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+                    bw.write(getResources().getString(R.string.start_ip));
+                    bw.close();
+                } catch (IOException e2) {
+                    e2.printStackTrace();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         };
         Thread thread = new Thread(runnable);
         thread.start();
 
 
-        btn_connect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view){
-                if (sPattern.matcher(machine_ip.getText()).matches()){
-                    context.connect(machine_ip.getText().toString(), PORT);
-                    File file = new File(getFilesDir(), fileSettings);
-                    try {
-                        BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-                        bw.write(machine_ip.getText().toString());
-                        bw.close();
-                    } catch (IOException e2) {
-                        e2.printStackTrace();
-                    }
-                    progressBar.setVisibility(View.VISIBLE);
-                    /*Intent intent = new Intent(MainActivity.this, AutoModeActivity.class);
-                    startActivity(intent);*/
-                    //activity.finish();
+        btn_connect.setOnClickListener(view -> {
+            if (sPattern.matcher(machine_ip.getText()).matches()){
+                context.connect(machine_ip.getText().toString(), PORT);
+                File file = new File(getFilesDir(), fileSettings);
+                try {
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+                    bw.write(machine_ip.getText().toString());
+                    bw.close();
+                } catch (IOException e2) {
+                    e2.printStackTrace();
                 }
-                else{
-                    Toast toast = Toast.makeText(getApplicationContext(),
-                            getString(R.string.error_ip), Toast.LENGTH_LONG);
-                    toast.show();
-                }
+                progressBar.setVisibility(View.VISIBLE);
+            }
+            else{
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        getString(R.string.error_ip), Toast.LENGTH_LONG);
+                toast.show();
             }
         });
     }

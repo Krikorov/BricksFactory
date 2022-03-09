@@ -5,7 +5,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.widget.SpinnerAdapter;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,7 +32,7 @@ public class Context extends Application {
     private volatile int status = 0; //статус который приходит от машины
     public volatile Vector<String> prg_name;
     public volatile Vector<Integer> prg_id;
-    public volatile int prg_index = 0;
+    public volatile int prg_index = -1;
 
     final int COMMAND_AFTER_REBOOT = 0;
     final int COMMAND_CONNECT = 1;
@@ -42,7 +41,8 @@ public class Context extends Application {
     final int COMMAND_STOP = 4;
     final int COMMAND_CONTINUE = 5;
     final int COMMAND_GET_LIST_PRG = 6;
-    final int COMMAND_DISCONNECT = 7;
+    final int COMMAND_UPDATE_STATUS = 7;
+    final int COMMAND_DISCONNECT = 8;
 
 
 
@@ -68,7 +68,9 @@ public class Context extends Application {
     public void stop(){
         state.stop();
     }
-
+    public void updateState(){
+        handlerConnection.sendEmptyMessage(COMMAND_UPDATE_STATUS);
+    }
     public void disconnect(){
         state.disconnect();
     }
@@ -107,34 +109,34 @@ public class Context extends Application {
         //стоп
         if (status == 0){
             state = new Stopped();
-            ((AutoModeActivity)this.activity).btnStart.setEnabled(true);
-            ((AutoModeActivity)this.activity).btnPause.setEnabled(false);
-            ((AutoModeActivity)this.activity).btnStop.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setEnabled(true);
-            ((AutoModeActivity)activity).spinner.setClickable(true);
+            if(activity instanceof AutoModeActivity){
+                activity.runOnUiThread(() -> {
+                    ((AutoModeActivity)activity).changeVisible(true, false,
+                            false, true, prg_index);
+                });
+            }
 
         }
         //пауза
         else if (status == 1){
             state = new Paused();
-            ((AutoModeActivity)activity).btnStart.setEnabled(true);
-            ((AutoModeActivity)activity).btnPause.setEnabled(false);
-            ((AutoModeActivity)activity).btnStop.setEnabled(true);
-            ((AutoModeActivity)activity).spinner.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setClickable(false);
-            ((AutoModeActivity)activity).spinner.setSelection(prg_index);
-            ((AutoModeActivity)activity).adapter.notifyDataSetChanged();
+            if(activity instanceof AutoModeActivity){
+                activity.runOnUiThread(() -> {
+                    ((AutoModeActivity)activity).changeVisible(true, false,
+                            true, false, prg_index);
+                });
+            }
+
         }
         //старт
         else if (status == 2){
             state = new Started();
-            ((AutoModeActivity)activity).btnStart.setEnabled(false);
-            ((AutoModeActivity)activity).btnPause.setEnabled(true);
-            ((AutoModeActivity)activity).btnStop.setEnabled(true);
-            ((AutoModeActivity)activity).spinner.setEnabled(false);
-            ((AutoModeActivity)activity).spinner.setClickable(false);
-            ((AutoModeActivity)activity).spinner.setSelection(prg_index);
-            ((AutoModeActivity)activity).adapter.notifyDataSetChanged();
+            if(activity instanceof AutoModeActivity){
+                activity.runOnUiThread(() -> {
+                    ((AutoModeActivity)activity).changeVisible(false, true,
+                            true, false, prg_index);
+                });
+            }
         }
 
 
@@ -200,6 +202,9 @@ public class Context extends Application {
                         case COMMAND_START:
                             ws.sendText("start_prg" + context.prg_id.get(context.prg_index));
                             break;
+                        case COMMAND_UPDATE_STATUS:
+                            ws.sendText("status");
+                            break;
                         case COMMAND_DISCONNECT:
                             disconnect();
                             break;
@@ -207,7 +212,7 @@ public class Context extends Application {
                 }
             };
             context.handlerConnection = handler;
-            handler.postDelayed(connectionError, 1000);
+            handler.postDelayed(connectionError, 3000);
             Looper.loop();
         }
 
@@ -327,12 +332,12 @@ public class Context extends Application {
 
         }
         public void stop(){
-            ((AutoModeActivity)activity).btnStop.setEnabled(false);
+            //((AutoModeActivity)activity).btnStop.setEnabled(false);
             handlerConnection.sendEmptyMessage(COMMAND_STOP);
             state = new Stopped();
         }
         public void pause() {
-            ((AutoModeActivity)activity).btnPause.setEnabled(false);
+            //((AutoModeActivity)activity).btnPause.setEnabled(false);
             handlerConnection.sendEmptyMessage(COMMAND_PAUSE);
             state = new Paused();
         }
@@ -345,7 +350,7 @@ public class Context extends Application {
         }
 
         public void start(){
-            ((AutoModeActivity)activity).btnStart.setEnabled(false);
+            //((AutoModeActivity)activity).btnStart.setEnabled(false);
             handlerConnection.sendEmptyMessage(COMMAND_START);
             state = new Started();
         }
@@ -364,12 +369,12 @@ public class Context extends Application {
         }
 
         public void start(){
-            ((AutoModeActivity)activity).btnStart.setEnabled(false);
+            //((AutoModeActivity)activity).btnStart.setEnabled(false);
             handlerConnection.sendEmptyMessage(COMMAND_CONTINUE);
             state = new Started();
         }
         public void stop(){
-            ((AutoModeActivity)activity).btnStop.setEnabled(false);
+            //((AutoModeActivity)activity).btnStop.setEnabled(false);
             handlerConnection.sendEmptyMessage(COMMAND_STOP);
             state = new Stopped();
         }

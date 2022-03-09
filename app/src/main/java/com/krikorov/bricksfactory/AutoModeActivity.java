@@ -80,5 +80,31 @@ public class AutoModeActivity extends AppCompatActivity{
         Intent intent = new Intent(AutoModeActivity.this, MainActivity.class);
         startActivity(intent); finish();
     }
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (context != null){
+            context.updateState();
+        }
+        else{
+            Intent intent = new Intent(AutoModeActivity.this, MainActivity.class);
+            startActivity(intent); finish();
+        }
+
+    }
+
+    public void changeVisible(boolean stateStart, boolean statePause, boolean stateStop,
+                              boolean stateSpinner, int prg_index){
+        btnStart.setEnabled(stateStart);
+        btnPause.setEnabled(statePause);
+        btnStop.setEnabled(stateStop);
+        spinner.setEnabled(stateSpinner);
+        spinner.setClickable(stateSpinner);
+        if (prg_index != -1){
+            spinner.setSelection(prg_index);
+        }
+
+        //adapter.notifyDataSetChanged();
+    }
 
 }
